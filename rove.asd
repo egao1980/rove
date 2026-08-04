@@ -1,6 +1,6 @@
 (defsystem "rove"
   :class :package-inferred-system
-  :version "0.10.0"
+  :version "0.11.0"
   :author "Eitaro Fukamachi"
   :license "BSD 3-Clause"
   :depends-on ("rove/main")
@@ -11,5 +11,6 @@
   :class :package-inferred-system
   :depends-on ("rove"
                "rove/tests/main"
-               "rove/tests/marks")
+               "rove/tests/marks"
+               "rove/tests/parametrize")
   :perform (test-op (o c) (symbol-call :rove/tests/main :run-all-tests)))
