@@ -5,6 +5,7 @@
   (:use-reexport #:rove/core/test)
   (:use-reexport #:rove/core/suite)
   (:use-reexport #:rove/core/result)
+  (:use-reexport #:rove/core/fixture)
   (:use-reexport #:rove/reporter)
   (:import-from #:rove/core/suite
                 #:run-system-tests)

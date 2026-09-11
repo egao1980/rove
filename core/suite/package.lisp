@@ -21,6 +21,8 @@
   (:import-from #:rove/core/marks
                 #:*mark-expr*
                 #:test-selected-by-marks-p)
+  (:import-from #:rove/core/fixture
+                #:clear-fixture-caches)
   (:export #:all-suites
            #:*shard*
            #:*shard-count*
@@ -196,6 +198,7 @@ global per-test cleanup, e.g. quiescing background threads between tests.")
       (initialize *stats*))
     (unless (and (null tests) (or *mark-expr* *shard-count*))
       (suite-begin *stats* suite-name)
+      (clear-fixture-caches :suite t)
       (handler-case
           (with-context (context :name suite-name)
             (unwind-protect
