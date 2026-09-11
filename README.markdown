@@ -124,6 +124,10 @@ $ ros install rove
 ```common-lisp
 (deftest testing-length
   (ok (= (length #(1 2 3)) 3)))
+
+;; Optional marks + per-test timeout (seconds):
+(deftest (slow-query :marks (:slow :db) :timeout 5)
+  (ok (query)))
 ```
 
 ### deftest-parametrize (name bindings &body body)
@@ -215,13 +219,31 @@ Evaluates before/after running a each test in the package.
   ...)
 ```
 
-### run (package &key style env)
+### deffixture / with-fixture
+
+```common-lisp
+(deffixture tmp-dir ()
+  (let ((dir (ensure-directories-exist (uiop:temporary-directory))))
+    (yield dir)
+    (uiop:delete-directory-tree dir :validate t :if-does-not-exist :ignore)))
+
+(deftest writes-file
+  (with-fixture (dir tmp-dir)
+    (ok (probe-file dir))))
+```
+
+`:scope :test` (default) re-runs setup/teardown each `with-fixture`. `:suite` / `:session` cache the yielded value (teardown after `yield` is skipped — use `teardown` / `defhook`).
+
+### run (package &key style env marks shard shards junit-file)
 
 ```common-lisp
 (run :myapp/tests)                              ; Defaults to spec-style output.
 (run :myapp/tests :style :spec)                 ; Detailed test output.
 (run :myapp/tests :style :dot)                  ; One-dot-per-test output.
 (run :myapp/tests :style :none)                 ; Minimal test output with filenames only.
+(run :myapp/tests :style :junit :junit-file #p"report.xml")
+(run :myapp/tests :marks '(not :slow))          ; pytest -m
+(run :myapp/tests :shard 0 :shards 4)           ; CI sharding
 (run :myapp/tests :env '(("APP_ENV" . "test")))
 ```
 
