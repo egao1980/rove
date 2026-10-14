@@ -161,7 +161,7 @@ Define one `deftest` per parameter row. Useful when the same assertions should r
   (ok (= (+ a b) expected)))
 ```
 
-`parametrize-test-name` builds the per-row symbol (`NAME/0` or `NAME/ID`).
+`parametrize-test-name` builds the per-row symbol (`NAME/0` or `NAME/ID`). Ids must be unique after upcasing; a literal `:ids (...)` list is data in both forms, any other `:ids` form is evaluated alongside `:rows`. Malformed tables (arity mismatch, duplicate ids or variables, unknown options) are rejected at macroexpansion. Redefining `NAME` with fewer rows unregisters the rows that disappeared.
 
 ### testing (description &body body)
 
