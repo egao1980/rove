@@ -22,7 +22,10 @@
   (:import-from #:rove/reporter/spec
                 #:spec-reporter)
   (:import-from #:rove/reporter/dot)
-  (:import-from #:rove/reporter/junit)
+  (:import-from #:rove/reporter
+                #:make-reporter)
+  (:import-from #:rove/reporter/junit
+                #:write-junit-file)
   (:import-from #:uiop)
   (:import-from #:cl-ppcre)
   (:export #:run
@@ -35,8 +38,7 @@
            #:*default-env*
 
            #:plan
-           #:*enable-colors*
-           #:*junit-output-file*))
+           #:*enable-colors*))
 (in-package #:rove/main)
 
 (defvar *default-env* '())
@@ -94,10 +96,12 @@
   (let ((*mark-expr* (and marks (normalize-mark-expr marks)))
         (*shard* shard)
         (*shard-count* shards)
-        (*junit-output-file* junit-file))
+        (reporter (make-reporter style)))
     (with-local-envs env
-      (with-reporter style
-        (run-system-tests target)))))
+      (multiple-value-prog1
+          (invoke-reporter reporter (lambda () (run-system-tests target)))
+        (when junit-file
+          (write-junit-file junit-file reporter))))))
 
 (defun compile-wild-card (pattern)
   (check-type pattern string)

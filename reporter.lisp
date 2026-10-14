@@ -15,7 +15,6 @@
   (:export #:reporter
            #:reporter-stream
            #:*report-stream*
-           #:*junit-output-file*
            #:diag
            #:with-reporter
            #:invoke-reporter
@@ -23,8 +22,6 @@
 (in-package #:rove/reporter)
 
 (defvar *report-stream* (make-synonym-stream '*standard-output*))
-(defvar *junit-output-file* nil
-  "When set, JUNIT-REPORTER also writes this pathname.")
 (defvar *single-test-summarize-preference* t)
 
 (defclass reporter (stats)
