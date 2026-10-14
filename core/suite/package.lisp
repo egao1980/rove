@@ -22,7 +22,8 @@
                 #:*mark-expr*
                 #:test-selected-by-marks-p)
   (:import-from #:rove/core/fixture
-                #:clear-fixture-caches)
+                #:*suite-fixture-cache*
+                #:teardown-fixtures)
   (:export #:all-suites
            #:*shard*
            #:*shard-count*
@@ -193,12 +194,12 @@ global per-test cleanup, e.g. quiescing background threads between tests.")
 (defmethod run-suite-tests ((suite suite))
   (let* ((suite-name (suite-name suite))
          (*package* (suite-package suite))
-         (tests (selected-suite-tests suite)))
+         (tests (selected-suite-tests suite))
+         (*suite-fixture-cache* '()))
     (when (toplevel-stats-p *stats*)
       (initialize *stats*))
     (unless (and (null tests) (or *mark-expr* *shard-count*))
       (suite-begin *stats* suite-name)
-      (clear-fixture-caches :suite t)
       (handler-case
           (with-context (context :name suite-name)
             (unwind-protect
@@ -213,8 +214,10 @@ global per-test cleanup, e.g. quiescing background threads between tests.")
                            (funcall (get-test test)))
                        (mapc #'run-hook (reverse (suite-after-hooks suite)))
                        (mapc #'funcall (reverse *after-test-hooks*)))))
-              (when (suite-teardown suite)
-                (funcall (suite-teardown suite)))))
+              (unwind-protect
+                   (when (suite-teardown suite)
+                     (funcall (suite-teardown suite)))
+                (teardown-fixtures :suite))))
         (quit-early ()))
       (suite-finish *stats* suite-name))
     (when (toplevel-stats-p *stats*)

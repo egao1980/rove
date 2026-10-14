@@ -196,7 +196,7 @@ Evaluates before/after running a each test in the package.
 
 ### deffixture (name (&key scope) &body body)
 
-Define a fixture. Call `yield` with the value; forms after `yield` run as teardown.
+Define a fixture: the forms before `(yield value)` are setup, `value` is what `with-fixture` binds, and the forms after `yield` are teardown.
 
 ```common-lisp
 (deffixture tmp-dir ()
@@ -209,7 +209,9 @@ Define a fixture. Call `yield` with the value; forms after `yield` run as teardo
     (ok (probe-file dir))))
 ```
 
-`:scope` is `:test` (default — setup/teardown each `with-fixture`), `:suite` (once per package suite), or `:session` (once per `run`). `:suite` / `:session` cache the yielded value and skip teardown after `yield` — use `teardown` / `defhook` for that cleanup.
+`deffixture` splits the body at `yield`, so the teardown keeps the fixture's lexical bindings and runs even when the test body exits non-locally (error, `:timeout`, `throw`). `yield` must appear exactly once, as a top-level form of the body or inside `let` / `let*` / `progn` / `locally`; anything else is a macroexpansion error.
+
+`:scope` is `:test` (default — setup and teardown around every `with-fixture`), `:suite` (set up on first use, torn down when the package suite finishes, after its `teardown`) or `:session` (set up on first use, torn down when `run` / `run-test` / `run-suite` finishes). Redefining a cached fixture tears the old value down.
 
 `with-fixtures` nests several bindings: `(with-fixtures ((a foo) (b bar)) ...)`.
 
