@@ -3,6 +3,8 @@
   (:use #:cl
         #:rove/core/stats
         #:rove/core/result)
+  (:import-from #:rove/core/diff
+                #:maybe-value-diff)
   (:shadow #:continue)
   (:import-from #:dissect
                 #:stack)
@@ -76,24 +78,26 @@
         `(values ,form nil nil))))
 
 (defun %okng-record (form result args-symbols args-values steps stacks reason duration desc class-fn positive source-location)
-  (let ((assertion
-          (make-instance (funcall class-fn
-                                  (if (eq result *fail*)
-                                      (not positive)
-                                      (not (null result)))
-                                  reason)
-                         :form form
-                         :steps steps
-                         :args args-symbols
-                         :values args-values
-                         :reason reason
-                         :desc desc
-                         :duration duration
-                         :stacks stacks
-                         :labels (and *stats*
-                                      (stats-context-labels *stats*))
-                         :negative (not positive)
-                         :source-location source-location)))
+  (let* ((ok-p (if (eq result *fail*)
+                   (not positive)
+                   (not (null result))))
+         (class (funcall class-fn ok-p reason))
+         (assertion
+           (make-instance class
+                          :form form
+                          :steps steps
+                          :args args-symbols
+                          :values args-values
+                          :reason reason
+                          :desc desc
+                          :duration duration
+                          :stacks stacks
+                          :labels (and *stats*
+                                       (stats-context-labels *stats*))
+                          :negative (not positive)
+                          :source-location source-location
+                          :diff (when (subtypep class 'failed)
+                                  (maybe-value-diff form args-values)))))
     (record *stats* assertion)
     result))
 
