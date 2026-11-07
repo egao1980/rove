@@ -7,7 +7,7 @@
                 #:*mark-expr*)
   (:import-from #:rove/core/diff #:format-value-diff #:maybe-value-diff)
   (:import-from #:rove/reporter/junit #:write-junit-report #:junit-reporter)
-  (:import-from #:rove/core/result #:passed-test))
+  (:import-from #:rove/core/result #:passed-test #:capture-stack #:*captured-frames*))
 (in-package #:rove/tests/gaps)
 
 (deftest (marked-slow :marks (:slow))
@@ -100,3 +100,11 @@
             do (push test shard-1))
     (ok (equal '(c a) shard-0))
     (ok (equal '(d b) shard-1))))
+
+
+;;; Stacks are rendered when the failure happens, not at report time: frame
+;;; arguments may be dynamic-extent objects that are dead by then.
+(deftest capture-stack-renders-eagerly
+  (let ((stack (capture-stack)))
+    (ok (every #'stringp stack))
+    (ok (<= (length stack) *captured-frames*))))

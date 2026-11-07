@@ -1,7 +1,10 @@
 (in-package #:cl-user)
 (defpackage #:rove/core/result
   (:use #:cl)
-  (:export #:passed
+  (:import-from #:dissect)
+  (:export #:capture-stack
+           #:*captured-frames*
+           #:passed
            #:failed
            #:pending
 
@@ -37,6 +40,25 @@
            #:passed-test
            #:failed-test))
 (in-package #:rove/core/result)
+
+(defparameter *captured-frames* 15
+  "How many stack frames CAPTURE-STACK renders.")
+
+(defun capture-stack ()
+  "Render the current stack to strings now, while every frame is live.
+
+Frame arguments can be dynamic-extent objects, such as the string stream
+FORMAT NIL stack-allocates. Keeping dissect frames and printing them at
+report time reads that memory after the stack has unwound. Once anything
+else (a deep native call, say) has overwritten it, SBCL faults with
+\"CORRUPTION WARNING ... Memory fault\"."
+  (let ((*print-circle* nil)
+        (*print-length* 10)
+        (*print-level* 4))
+    (loop for frame in (dissect:stack)
+          repeat *captured-frames*
+          collect (handler-case (dissect:present-object frame nil)
+                    (error () "<unprintable frame>")))))
 
 (defvar *print-assertion* nil)
 (defvar *suppress-assertion-printing* nil)

@@ -125,7 +125,11 @@
                                  (ignore-errors
                                   (loop repeat 15
                                         for stack in (assertion-stacks f)
-                                        do (princ (color-text :gray (dissect:present-object stack nil)) stream)
+                                        ;; Strings from CAPTURE-STACK; frames from older callers.
+                                        do (princ (color-text :gray (if (stringp stack)
+                                                                        stack
+                                                                        (dissect:present-object stack nil)))
+                                                  stream)
                                            (fresh-line stream))))))))))))))
   (fresh-line stream)
   (unless (= 0 (length pending-tests))

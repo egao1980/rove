@@ -102,7 +102,7 @@
     result))
 
 (defun record-error (form steps reason duration description class-fn positive source-location)
-  (%okng-record form *fail* nil nil steps (dissect:stack) reason duration description class-fn positive source-location))
+  (%okng-record form *fail* nil nil steps (capture-stack) reason duration description class-fn positive source-location))
 
 (defun calc-duration (start)
   (truncate (- (get-internal-real-time) start)
