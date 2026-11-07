@@ -11,7 +11,8 @@
                 #:passed-assertion
                 #:failed-assertion
                 #:assertion-description
-                #:*suppress-assertion-printing*)
+                #:*suppress-assertion-printing*
+                #:capture-stack)
   (:import-from #:dissect
                 #:stack)
   (:import-from #:rove/core/marks
@@ -66,7 +67,7 @@
                                           (make-instance 'failed-assertion
                                                          :form t
                                                          :reason e
-                                                         :stacks (dissect:stack)
+                                                         :stacks (capture-stack)
                                                          :labels (and *stats*
                                                                       (stats-context-labels *stats*))
                                                          :desc "Raise an error while testing."))
