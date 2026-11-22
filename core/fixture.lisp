@@ -4,7 +4,7 @@
   (:export #:deffixture
            #:with-fixture
            #:with-fixtures
-           #:yield
+           #:fixture-yield
            #:find-fixture
            #:clear-fixture-caches
            #:*session-fixture-cache*))
@@ -56,18 +56,33 @@
                           (funcall continue value)
                           (throw 'rove-fixture-cache value))))))))))
 
+(defun fixture-yield-names ()
+  "Function names DEFFIXTURE binds to the yield continuation.
+FIXTURE-YIELD is exported. YIELD is interned in the package the fixture is
+read in, so a bare (YIELD x) works without ROVE exporting a generic YIELD
+that clashes with other libraries (e.g. SXQL). ROVE/CORE/FIXTURE::YIELD
+keeps old package-qualified callers working."
+  (remove-duplicates
+   (list 'fixture-yield
+         'yield
+         (intern (symbol-name 'yield) *package*))))
+
 (defmacro deffixture (name (&key (scope :test)) &body body)
-  "Define a fixture. Call YIELD with the value; code after YIELD is teardown.
+  "Define a fixture. Call YIELD (or FIXTURE-YIELD) with the value; code after
+the call is teardown.
 
 SCOPE is :test (default), :suite (once per package suite), or :session
 (once per ROVE:RUN)."
-  (let ((continue (gensym "CONTINUE")))
+  (let ((continue (gensym "CONTINUE"))
+        (names (fixture-yield-names)))
     `(eval-when (:load-toplevel :execute)
        (set-fixture ',name ,scope
                     (lambda (,continue)
-                      (flet ((yield (&optional value)
-                               (funcall ,continue value)))
-                        (declare (ignorable #'yield))
+                      (flet ,(loop for fname in names
+                                   collect `(,fname (&optional value)
+                                              (funcall ,continue value)))
+                        (declare (ignorable ,@(loop for fname in names
+                                                    collect `(function ,fname))))
                         ,@body)))
        ',name)))
 

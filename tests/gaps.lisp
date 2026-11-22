@@ -108,3 +108,35 @@
   (let ((stack (capture-stack)))
     (ok (every #'stringp stack))
     (ok (<= (length stack) *captured-frames*))))
+
+;;; cl-stack#357: ROVE must not export a generic YIELD (it clashed with
+;;; SXQL/SQL-TYPE:YIELD for packages using both). Bare YIELD still works in
+;;; DEFFIXTURE bodies, as does the exported FIXTURE-YIELD.
+(deffixture explicit-yield ()
+  (fixture-yield :explicit))
+
+(deftest rove-does-not-export-yield
+  (ng (eq :external (nth-value 1 (find-symbol "YIELD" :rove))))
+  (ng (eq :external (nth-value 1 (find-symbol "YIELD" :rove/core/fixture))))
+  (ok (eq :external (nth-value 1 (find-symbol "FIXTURE-YIELD" :rove))))
+  (ok (eq (intern "YIELD" :rove/tests/gaps)
+          (find-symbol "YIELD" :rove/tests/gaps)))
+  (with-fixture (v explicit-yield)
+    (ok (eq v :explicit))))
+
+(deftest rove-coexists-with-foreign-yield
+  (let ((other (or (find-package "ROVE/TESTS/GAPS-OTHER-YIELD")
+                   (make-package "ROVE/TESTS/GAPS-OTHER-YIELD" :use '()))))
+    (export (intern "YIELD" other) other)
+    (let ((user (or (find-package "ROVE/TESTS/GAPS-YIELD-USER")
+                    (make-package "ROVE/TESTS/GAPS-YIELD-USER"
+                                  :use (list "CL" "ROVE" other)))))
+      (ok (eq (find-symbol "YIELD" user)
+              (find-symbol "YIELD" other)))
+      ;; A fixture read in that package binds the foreign YIELD lexically.
+      (let ((*package* user))
+        (eval (read-from-string
+               "(rove:deffixture foreign-yield-fx () (yield :foreign))")))
+      (rove/core/fixture::call-with-fixture
+       (find-symbol "FOREIGN-YIELD-FX" user)
+       (lambda (v) (ok (eq v :foreign)))))))

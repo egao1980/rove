@@ -234,6 +234,8 @@ Evaluates before/after running a each test in the package.
 
 `:scope :test` (default) re-runs setup/teardown each `with-fixture`. `:suite` / `:session` cache the yielded value (teardown after `yield` is skipped — use `teardown` / `defhook`).
 
+`yield` is bound lexically inside `deffixture` bodies (as the symbol `YIELD` of the package the fixture is read in); `rove` does not export it, so packages using both `rove` and a library that exports `yield` (e.g. sxql) do not get a name conflict. `fixture-yield` is the exported equivalent.
+
 ### run (package &key style env marks shard shards junit-file)
 
 ```common-lisp
