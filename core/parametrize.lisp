@@ -83,6 +83,10 @@
     (t
      (error "DEFTEST-PARAMETRIZE: :ids must be a list, got ~S" ids-form))))
 
+(defun quote-values (values)
+  "VALUES (a :ROWS row, already evaluated) as forms that yield them."
+  (mapcar (lambda (value) (list 'quote value)) values))
+
 (defun expand-parametrized-deftest (name-form vars values body)
   `(deftest ,name-form
      (let ,(mapcar #'list vars values)
@@ -99,12 +103,14 @@ Syntax:
 
 NAME-AND-OPTIONS is the same as DEFTEST: NAME or (NAME :compile-at …).
 
-Each ROW is a list of values for VAR*, or a single value when there is
-one variable. Tests are registered as NAME/0, NAME/1, … unless :ids
-supplies per-row suffixes (NAME/ID).
+Each ROW is a list of forms for VAR*, or a single form when there is
+one variable; each test evaluates its row's forms, so write '(1 2) for
+a list. Tests are registered as NAME/0, NAME/1, … unless :ids supplies
+per-row suffixes (NAME/ID).
 
 :rows FORM evaluates FORM at load/execute time; the value must be a
-list of rows. This is for tables that are not literal constants.
+list of rows. This is for tables that are not literal constants. Its
+rows hold values, not forms: a list or symbol is bound as is.
 
 Examples:
 
@@ -147,7 +153,9 @@ Examples:
                  (loop for ,row-var in ,rows-var
                        for ,index-var from 0
                        for ,id-var = (when ,ids-var (nth ,index-var ,ids-var))
-                       for ,values-var = (normalize-row ',vars ,row-var)
+                       ;; :ROWS values are data, not forms: quoted, so a list value is
+                       ;; not evaluated as a call nor a symbol as a variable.
+                       for ,values-var = (quote-values (normalize-row ',vars ,row-var))
                        for ,test-var = (parametrize-test-name ',base ,index-var ,id-var)
                        for ,name-form-var = (if ',deftest-options
                                                 (list* ,test-var ',deftest-options)

@@ -1,6 +1,6 @@
 (defsystem "rove"
   :class :package-inferred-system
-  :version "0.11.0"
+  :version "0.11.1"
   :author "Eitaro Fukamachi"
   :license "BSD 3-Clause"
   :depends-on ("rove/main" "dissect")
