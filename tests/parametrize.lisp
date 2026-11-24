@@ -29,6 +29,17 @@
     ((a b expected) :rows *dyn-rows*)
   (ok (= (+ a b) expected)))
 
+(defparameter *dyn-data-rows*
+  (list (list "list" '(1 2 3) 3)
+        (list "symbol" 'not-a-variable 0)
+        (list "keyword list" '(:k :v) 2)))
+
+(deftest-parametrize dynamic-rows-are-values
+    ((label value expected) :rows *dyn-data-rows*)
+  ;; A list or symbol from :ROWS is bound as is, not evaluated.
+  (ok (= expected (if (listp value) (length value) 0)) label)
+  (ok (member value (mapcar #'second *dyn-data-rows*) :test #'equal) label))
+
 (deftest parametrize-names-registered
   (ok (functionp (get-test 'add-static/0)))
   (ok (functionp (get-test 'add-static/2)))
